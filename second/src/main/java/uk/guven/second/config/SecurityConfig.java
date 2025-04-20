@@ -24,17 +24,25 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .cors(Customizer.withDefaults())
-            .csrf(AbstractHttpConfigurer::disable)
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/api/public/**").permitAll()
-                .requestMatchers("/api/admin/**").hasAnyRole("admin")
-                .requestMatchers("/api/user/**").hasAnyRole("user")
+                // Public endpoints
+                .requestMatchers("/api/public/**", "/", "/error").permitAll()
+                // Login related endpoints
+                .requestMatchers("/login", "/oauth2/**", "/login/oauth2/code/*").permitAll()
+                // Protected endpoints
+                .requestMatchers("/api/admin/**").hasAnyRole("default-roles-sample_app_realm", "admin")
+                .requestMatchers("/api/user/**").authenticated()
                 .requestMatchers("/api/resources/**").authenticated()
                 .anyRequest().authenticated()
             )
+            // API için Resource Server
             .oauth2ResourceServer(oauth2 -> oauth2
                 .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+            )
+            // Tarayıcı için OAuth2 Login (SSO)
+            .oauth2Login(oauth2 -> oauth2
+                .defaultSuccessUrl("/api/user")
             );
 
         return http.build();
@@ -43,7 +51,6 @@ public class SecurityConfig {
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
-        // Özel role converter'ı kullan
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(new KeycloakJwtRoleConverter());
         return jwtAuthenticationConverter;
     }
