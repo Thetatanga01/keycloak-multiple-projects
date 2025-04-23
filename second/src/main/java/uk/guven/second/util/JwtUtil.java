@@ -1,5 +1,4 @@
 package uk.guven.second.util;
-
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -84,5 +83,18 @@ public class JwtUtil {
     public boolean hasRole(String role) {
         List<String> roles = getRoles();
         return roles.contains(role);
+    }
+
+    /**
+     * JWT'den ID token'ı alır (logout için gerekli)
+     * @return ID token veya yoksa null
+     */
+    public String getIdToken() {
+        Jwt jwt = getJwtFromContext();
+        if (jwt != null) {
+            // Keycloak'ta genellikle JWT'nin kendisi id_token olarak kullanılabilir
+            return jwt.getTokenValue();
+        }
+        return null;
     }
 }

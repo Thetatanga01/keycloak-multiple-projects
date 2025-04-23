@@ -1,4 +1,5 @@
 package uk.guven.second.config;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -6,7 +7,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
@@ -28,8 +28,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(authorize -> authorize
                 // Public endpoints
                 .requestMatchers("/api/public/**", "/", "/error").permitAll()
-                // Login related endpoints
-                .requestMatchers("/login", "/oauth2/**", "/login/oauth2/code/*").permitAll()
+                // Login & Logout related endpoints
+                .requestMatchers("/login", "/logout", "/api/auth/logout", "/oauth2/**", "/login/oauth2/code/*").permitAll()
                 // Protected endpoints
                 .requestMatchers("/api/admin/**").hasAnyRole("default-roles-sample_app_realm", "admin")
                 .requestMatchers("/api/user/**").authenticated()
@@ -43,6 +43,14 @@ public class SecurityConfig {
             // Tarayıcı için OAuth2 Login (SSO)
             .oauth2Login(oauth2 -> oauth2
                 .defaultSuccessUrl("/api/user")
+            )
+            // Logout yapılandırması
+            .logout(logout -> logout
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/api/public")
+                .invalidateHttpSession(true)
+                .clearAuthentication(true)
+                .deleteCookies("JSESSIONID")
             );
 
         return http.build();

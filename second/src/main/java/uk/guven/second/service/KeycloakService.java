@@ -10,6 +10,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -22,12 +23,6 @@ public class KeycloakService {
 
     /**
      * Keycloak'tan token alır
-     *
-     * @param username Kullanıcı adı
-     * @param password Şifre
-     * @param clientId Client ID
-     * @param clientSecret Client Secret
-     * @return Token yanıtı
      */
     public Map<String, Object> getToken(String username, String password, String clientId, String clientSecret) {
         HttpHeaders headers = new HttpHeaders();
@@ -59,9 +54,6 @@ public class KeycloakService {
 
     /**
      * Token'ı doğrular ve içeriğini alır
-     *
-     * @param token Doğrulanacak token
-     * @return Token içeriği
      */
     public Map<String, Object> introspectToken(String token, String clientId, String clientSecret) {
         HttpHeaders headers = new HttpHeaders();
@@ -91,11 +83,6 @@ public class KeycloakService {
 
     /**
      * Token'ı yeniler
-     *
-     * @param refreshToken Yenileme token'ı
-     * @param clientId Client ID
-     * @param clientSecret Client Secret
-     * @return Yeni token yanıtı
      */
     public Map<String, Object> refreshToken(String refreshToken, String clientId, String clientSecret) {
         HttpHeaders headers = new HttpHeaders();
@@ -122,5 +109,62 @@ public class KeycloakService {
         );
 
         return response.getBody();
+    }
+
+    /**
+     * Keycloak oturumunu sonlandırır
+     */
+    public Map<String, Object> logout(String idToken, String clientId, String clientSecret) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+            MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+            map.add("id_token_hint", idToken);
+            map.add("client_id", clientId);
+
+            // Eğer client_secret gerekiyorsa
+            if (clientSecret != null && !clientSecret.isEmpty()) {
+                map.add("client_secret", clientSecret);
+            }
+
+            String logoutEndpoint = keycloakIssuerUri + "/protocol/openid-connect/logout";
+            System.out.println("Keycloak logout endpoint: " + logoutEndpoint);
+
+            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+
+            try {
+                ResponseEntity<Map> response = restTemplate.postForEntity(
+                    logoutEndpoint,
+                    request,
+                    Map.class
+                );
+
+                Map<String, Object> result = new HashMap<>();
+                result.put("status", "success");
+                result.put("response_code", response.getStatusCodeValue());
+
+                if (response.getBody() != null) {
+                    result.put("body", response.getBody());
+                }
+
+                return result;
+            } catch (Exception e) {
+                System.err.println("Keycloak logout error: " + e.getMessage());
+                e.printStackTrace();
+
+                return Map.of(
+                    "status", "error",
+                    "message", "Logout request failed: " + e.getMessage()
+                );
+            }
+        } catch (Exception e) {
+            System.err.println("Genel hata: " + e.getMessage());
+            e.printStackTrace();
+            return Map.of(
+                "status", "error",
+                "message", "General error: " + e.getMessage()
+            );
+        }
     }
 }

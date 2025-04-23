@@ -23,8 +23,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(authorize -> authorize
                 // Public endpoints
                 .requestMatchers("/api/public/**", "/", "/error").permitAll()
-                // Login related endpoints
-                .requestMatchers("/login", "/oauth2/**", "/login/oauth2/code/*").permitAll()
+                // Login & Logout related endpoints
+                .requestMatchers("/login", "/logout", "/api/auth/logout", "/oauth2/**", "/login/oauth2/code/*").permitAll()
                 // Protected endpoints
                 .requestMatchers("/api/admin/**").hasAnyRole("default-roles-sample_app_realm", "admin")
                 .requestMatchers("/api/user/**").authenticated()
@@ -38,6 +38,14 @@ public class SecurityConfig {
             // Tarayıcı için OAuth2 Login (SSO)
             .oauth2Login(oauth2 -> oauth2
                 .defaultSuccessUrl("/api/user")
+            )
+            // Logout yapılandırması
+            .logout(logout -> logout
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/api/public")
+                .invalidateHttpSession(true)
+                .clearAuthentication(true)
+                .deleteCookies("JSESSIONID")
             );
 
         return http.build();
