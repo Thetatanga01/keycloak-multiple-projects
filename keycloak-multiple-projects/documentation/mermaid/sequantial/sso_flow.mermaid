@@ -1,0 +1,67 @@
+sequenceDiagram
+    participant Kullanıcı/Tarayıcı
+    participant UygulamaA
+    participant UygulamaB
+    participant SpringSecurity
+    participant LoginController
+    participant Keycloak
+    participant OAuth2UserService
+
+    Note over Kullanıcı/Tarayıcı,UygulamaA: Kullanıcı henüz giriş yapmamış
+    Kullanıcı/Tarayıcı->>UygulamaA: /api/user talebinde bulunur
+    UygulamaA->>SpringSecurity: Yetkilendirme kontrolü
+    SpringSecurity-->>Kullanıcı/Tarayıcı: 302 Redirect to /login
+
+    Kullanıcı/Tarayıcı->>LoginController: /login
+    LoginController-->>Kullanıcı/Tarayıcı: Redirect to /oauth2/authorization/keycloak
+
+    Kullanıcı/Tarayıcı->>SpringSecurity: /oauth2/authorization/keycloak
+    SpringSecurity-->>Kullanıcı/Tarayıcı: 302 Redirect to Keycloak
+    Note over SpringSecurity,Kullanıcı/Tarayıcı: state, client_id, redirect_uri parametreleri
+
+    Kullanıcı/Tarayıcı->>Keycloak: /auth sayfasına gider
+    Note over Kullanıcı/Tarayıcı,Keycloak: Kullanıcı giriş bilgilerini girer
+    Keycloak-->>Kullanıcı/Tarayıcı: 302 Redirect + Yetkilendirme kodu
+
+    Kullanıcı/Tarayıcı->>UygulamaA: /login/oauth2/code/keycloak + kod
+    UygulamaA->>Keycloak: Kod karşılığında token talep eder
+    Note over UygulamaA,Keycloak: client_id, client_secret, code, redirect_uri
+    Keycloak-->>UygulamaA: access_token, refresh_token, id_token
+
+    UygulamaA->>OAuth2UserService: oidcUserService.loadUser
+    OAuth2UserService->>OAuth2UserService: Keycloak yetkilerini çıkar
+    OAuth2UserService-->>UygulamaA: OidcUser nesnesi
+
+    UygulamaA-->>Kullanıcı/Tarayıcı: 302 Redirect to /api/user
+    UygulamaA->>SpringSecurity: Yetkilendirme kontrolü
+    SpringSecurity-->>UygulamaA: Yetkili
+    UygulamaA-->>Kullanıcı/Tarayıcı: Korunan içerik
+
+    Note over Kullanıcı/Tarayıcı,UygulamaB: Kullanıcı artık oturum açmış durumda
+    Kullanıcı/Tarayıcı->>UygulamaB: /api/user talebinde bulunur
+    UygulamaB->>SpringSecurity: Yetkilendirme kontrolü
+    SpringSecurity->>UygulamaB: Oturum açık mı kontrolü
+    UygulamaB-->>SpringSecurity: Oturum bulunamadı
+    SpringSecurity-->>Kullanıcı/Tarayıcı: 302 Redirect to /login
+
+    Kullanıcı/Tarayıcı->>LoginController: /login
+    LoginController-->>Kullanıcı/Tarayıcı: Redirect to /oauth2/authorization/keycloak
+
+    Kullanıcı/Tarayıcı->>SpringSecurity: /oauth2/authorization/keycloak
+    SpringSecurity-->>Kullanıcı/Tarayıcı: 302 Redirect to Keycloak
+
+    Kullanıcı/Tarayıcı->>Keycloak: Auth isteği gönderilir
+    Note over Kullanıcı/Tarayıcı,Keycloak: Keycloak kullanıcıyı tanır (cookie)
+    Keycloak-->>Kullanıcı/Tarayıcı: 302 Redirect + Yeni yetkilendirme kodu (tekrar giriş istemez)
+
+    Kullanıcı/Tarayıcı->>UygulamaB: /login/oauth2/code/keycloak + kod
+    UygulamaB->>Keycloak: Kod karşılığında token talep eder
+    Keycloak-->>UygulamaB: access_token, refresh_token, id_token
+
+    UygulamaB->>OAuth2UserService: oidcUserService.loadUser
+    OAuth2UserService-->>UygulamaB: OidcUser nesnesi
+
+    UygulamaB-->>Kullanıcı/Tarayıcı: 302 Redirect to /api/user
+    UygulamaB->>SpringSecurity: Yetkilendirme kontrolü
+    SpringSecurity-->>UygulamaB: Yetkili
+    UygulamaB-->>Kullanıcı/Tarayıcı: Korunan içerik

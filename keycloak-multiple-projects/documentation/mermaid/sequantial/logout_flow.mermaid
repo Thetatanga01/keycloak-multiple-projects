@@ -1,0 +1,28 @@
+sequenceDiagram
+    participant Kullanıcı/Tarayıcı
+    participant LogoutController
+    participant SecurityContextLogoutHandler
+    participant KeycloakService
+    participant Keycloak
+
+    Kullanıcı/Tarayıcı->>LogoutController: /api/auth/logout
+    LogoutController->>SecurityContextLogoutHandler: logout çağrısı
+    SecurityContextLogoutHandler->>SecurityContextLogoutHandler: Yerel oturumu sonlandır
+    SecurityContextLogoutHandler-->>LogoutController: Yerel oturum sonlandırıldı
+
+    LogoutController->>LogoutController: ID token al
+    Note over LogoutController: ID token, oturum açık olan kullanıcıdan alınır
+
+    alt ID token bulunamadı
+        LogoutController-->>Kullanıcı/Tarayıcı: Redirect to /api/public
+    else ID token bulundu
+        LogoutController->>KeycloakService: logout çağrısı
+        KeycloakService->>Keycloak: /protocol/openid-connect/logout
+        Note over KeycloakService,Keycloak: id_token_hint, client_id parametreleri
+        Keycloak->>Keycloak: Kullanıcı oturumunu sonlandır
+        Keycloak-->>KeycloakService: Yanıt
+        KeycloakService-->>LogoutController: Logout yanıtı
+        LogoutController-->>Kullanıcı/Tarayıcı: Redirect to /api/public
+    end
+
+    Note over Kullanıcı/Tarayıcı: Artık tüm uygulamalarda oturum kapanmıştır

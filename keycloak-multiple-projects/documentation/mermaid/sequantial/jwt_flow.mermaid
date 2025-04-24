@@ -1,0 +1,34 @@
+sequenceDiagram
+    participant İstemci
+    participant AuthController
+    participant KeycloakService
+    participant Keycloak
+    participant SpringSecurity
+    participant KorunanAPI
+
+    İstemci->>AuthController: POST /api/auth/token
+    Note over İstemci,AuthController: Kullanıcı adı, şifre, client_id gönderilir
+    AuthController->>KeycloakService: getToken çağrısı
+    KeycloakService->>Keycloak: token isteği gönderilir
+    Note over KeycloakService,Keycloak: /protocol/openid-connect/token
+    Keycloak-->>KeycloakService: JWT token döndürülür
+    KeycloakService-->>AuthController: token yanıtı
+    AuthController-->>İstemci: access_token, refresh_token, id_token
+
+    Note over İstemci: Token saklanır
+
+    İstemci->>KorunanAPI: İstek + Authorization: Bearer token
+    KorunanAPI->>SpringSecurity: JWT doğrulama
+    SpringSecurity->>SpringSecurity: KeycloakJwtRoleConverter ile roller çıkarılır
+    SpringSecurity-->>KorunanAPI: Kimlik doğrulanır ve roller atanır
+    KorunanAPI->>KorunanAPI: @PreAuthorize ile rol kontrolü
+    KorunanAPI-->>İstemci: Korunan içerik
+
+    Note over İstemci,AuthController: Eğer token süresi dolmuşsa
+    İstemci->>AuthController: POST /api/auth/refresh
+    Note over İstemci,AuthController: refresh_token, client_id gönderilir
+    AuthController->>KeycloakService: refreshToken çağrısı
+    KeycloakService->>Keycloak: token yenileme isteği
+    Keycloak-->>KeycloakService: Yeni JWT token
+    KeycloakService-->>AuthController: Yeni token yanıtı
+    AuthController-->>İstemci: Yenilenen tokenlar

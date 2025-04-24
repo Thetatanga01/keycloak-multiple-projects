@@ -1,0 +1,326 @@
+{
+	"info": {
+		"_postman_id": "267ab261-b793-4e4f-96eb-55d6d48e4922",
+		"name": "keycloak",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1164485"
+	},
+	"item": [
+		{
+			"name": "first app",
+			"item": [
+				{
+					"name": "helloworld",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/hello",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"hello"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get-token",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "first_app",
+									"type": "text"
+								},
+								{
+									"key": "client_secret",
+									"value": "cADPCEMaKGWAwDyt8Ficpa3KVi8IowYV",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "user1",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "password",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "https://keycloak.guven.uk/realms/guven_realm/protocol/openid-connect/token",
+							"protocol": "https",
+							"host": [
+								"keycloak",
+								"guven",
+								"uk"
+							],
+							"path": [
+								"realms",
+								"guven_realm",
+								"protocol",
+								"openid-connect",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "public",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/public",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"public"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "user",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI1STlPMVB4MUtYUGk1bE9lTzJLVjN3RmZ1b1lsbnM4TVJ1VlpyczhxalhrIn0.eyJleHAiOjE3NDUxNTgwMjUsImlhdCI6MTc0NTE1NzcyNSwianRpIjoib25ydHJvOjdlZTE5YjY2LTg4ZjUtNGZkMy1iMDBlLTMyODVmODhlOTNjNiIsImlzcyI6Imh0dHBzOi8va2V5Y2xvYWsuZ3V2ZW4udWsvcmVhbG1zL2d1dmVuX3JlYWxtIiwiYXVkIjoiYWNjb3VudCIsInN1YiI6IjBhNjNmNjRjLTRmN2ItNGNlNy05MDk5LTg0ZjQxMDFiZjdlNSIsInR5cCI6IkJlYXJlciIsImF6cCI6ImZpcnN0X2FwcCIsInNpZCI6IjU5YzY2OGZlLTc3YzMtNGQ0Mi1hZTk2LWQxYTJhOTc3M2VmNCIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiaHR0cDovL2xvY2FsaG9zdDo4MDgwLyoiXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIm9mZmxpbmVfYWNjZXNzIiwiZGVmYXVsdC1yb2xlcy1maXJzdF9hcHBfcmVhbG0iLCJ1bWFfYXV0aG9yaXphdGlvbiIsInVzZXIiXX0sInJlc291cmNlX2FjY2VzcyI6eyJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6ImVtYWlsIHByb2ZpbGUiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwibmFtZSI6InVzZXIxIGZpcnN0IG5hbWUgdXNlcjEgbGFzdCBuYW1lIiwicHJlZmVycmVkX3VzZXJuYW1lIjoidXNlcjEiLCJnaXZlbl9uYW1lIjoidXNlcjEgZmlyc3QgbmFtZSIsImZhbWlseV9uYW1lIjoidXNlcjEgbGFzdCBuYW1lIiwiZW1haWwiOiJ1c2VyMUBnbWFpbC5jb20ifQ.zX4JuACTb8vOaiP70kr-TDecy4g1eUx9SQwa-n7u0wLTw07_TKR1GhretgtxZozOkwbsK6k50gglJIF5VD_w5ZQhvWNf6TvrcH8aukBNg4K5CDf0XfJfcvMkgz90SRaCn6n0Fb0AMufXyySxHuerCrif7msRU3eS4p6jjGwjsnmCxKcWBX_oDbdZL7QCFrT3rWVXocDm2ybFcd7QSzpPCAAVO6-6c9TLpTs0NX1AO6Gy7qo2c3ObmrxXLsmNj5DiEs8Al1E1ZuWGangjvboTNi-1NMANrKl3ZO2uD1Hx4puCDLOnsKwDMnGVsK9yd7siTG_bfvPvOA2MqpOI6CZBbg",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/user",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "resource/user",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI1STlPMVB4MUtYUGk1bE9lTzJLVjN3RmZ1b1lsbnM4TVJ1VlpyczhxalhrIn0.eyJleHAiOjE3NDUxNTgwMjUsImlhdCI6MTc0NTE1NzcyNSwianRpIjoib25ydHJvOjdlZTE5YjY2LTg4ZjUtNGZkMy1iMDBlLTMyODVmODhlOTNjNiIsImlzcyI6Imh0dHBzOi8va2V5Y2xvYWsuZ3V2ZW4udWsvcmVhbG1zL2d1dmVuX3JlYWxtIiwiYXVkIjoiYWNjb3VudCIsInN1YiI6IjBhNjNmNjRjLTRmN2ItNGNlNy05MDk5LTg0ZjQxMDFiZjdlNSIsInR5cCI6IkJlYXJlciIsImF6cCI6ImZpcnN0X2FwcCIsInNpZCI6IjU5YzY2OGZlLTc3YzMtNGQ0Mi1hZTk2LWQxYTJhOTc3M2VmNCIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiaHR0cDovL2xvY2FsaG9zdDo4MDgwLyoiXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIm9mZmxpbmVfYWNjZXNzIiwiZGVmYXVsdC1yb2xlcy1maXJzdF9hcHBfcmVhbG0iLCJ1bWFfYXV0aG9yaXphdGlvbiIsInVzZXIiXX0sInJlc291cmNlX2FjY2VzcyI6eyJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6ImVtYWlsIHByb2ZpbGUiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwibmFtZSI6InVzZXIxIGZpcnN0IG5hbWUgdXNlcjEgbGFzdCBuYW1lIiwicHJlZmVycmVkX3VzZXJuYW1lIjoidXNlcjEiLCJnaXZlbl9uYW1lIjoidXNlcjEgZmlyc3QgbmFtZSIsImZhbWlseV9uYW1lIjoidXNlcjEgbGFzdCBuYW1lIiwiZW1haWwiOiJ1c2VyMUBnbWFpbC5jb20ifQ.zX4JuACTb8vOaiP70kr-TDecy4g1eUx9SQwa-n7u0wLTw07_TKR1GhretgtxZozOkwbsK6k50gglJIF5VD_w5ZQhvWNf6TvrcH8aukBNg4K5CDf0XfJfcvMkgz90SRaCn6n0Fb0AMufXyySxHuerCrif7msRU3eS4p6jjGwjsnmCxKcWBX_oDbdZL7QCFrT3rWVXocDm2ybFcd7QSzpPCAAVO6-6c9TLpTs0NX1AO6Gy7qo2c3ObmrxXLsmNj5DiEs8Al1E1ZuWGangjvboTNi-1NMANrKl3ZO2uD1Hx4puCDLOnsKwDMnGVsK9yd7siTG_bfvPvOA2MqpOI6CZBbg",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/resources/881c2a8e-5c06-41e6-90d9-b68b687586b5",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"resources",
+								"881c2a8e-5c06-41e6-90d9-b68b687586b5"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "second app",
+			"item": [
+				{
+					"name": "helloworld",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/hello",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"hello"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get-token",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "first_app",
+									"type": "text"
+								},
+								{
+									"key": "client_secret",
+									"value": "ICL21vpw6VshItKyvmS8hjqnSTVwASKA",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "user1",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "password",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "https://keycloak.guven.uk/realms/guven_realm/protocol/openid-connect/token",
+							"protocol": "https",
+							"host": [
+								"keycloak",
+								"guven",
+								"uk"
+							],
+							"path": [
+								"realms",
+								"guven_realm",
+								"protocol",
+								"openid-connect",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "public",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:9090/api/public",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9090",
+							"path": [
+								"api",
+								"public"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "user",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI1STlPMVB4MUtYUGk1bE9lTzJLVjN3RmZ1b1lsbnM4TVJ1VlpyczhxalhrIn0.eyJleHAiOjE3NDUxNTgwMjUsImlhdCI6MTc0NTE1NzcyNSwianRpIjoib25ydHJvOjdlZTE5YjY2LTg4ZjUtNGZkMy1iMDBlLTMyODVmODhlOTNjNiIsImlzcyI6Imh0dHBzOi8va2V5Y2xvYWsuZ3V2ZW4udWsvcmVhbG1zL2d1dmVuX3JlYWxtIiwiYXVkIjoiYWNjb3VudCIsInN1YiI6IjBhNjNmNjRjLTRmN2ItNGNlNy05MDk5LTg0ZjQxMDFiZjdlNSIsInR5cCI6IkJlYXJlciIsImF6cCI6ImZpcnN0X2FwcCIsInNpZCI6IjU5YzY2OGZlLTc3YzMtNGQ0Mi1hZTk2LWQxYTJhOTc3M2VmNCIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiaHR0cDovL2xvY2FsaG9zdDo4MDgwLyoiXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIm9mZmxpbmVfYWNjZXNzIiwiZGVmYXVsdC1yb2xlcy1maXJzdF9hcHBfcmVhbG0iLCJ1bWFfYXV0aG9yaXphdGlvbiIsInVzZXIiXX0sInJlc291cmNlX2FjY2VzcyI6eyJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6ImVtYWlsIHByb2ZpbGUiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwibmFtZSI6InVzZXIxIGZpcnN0IG5hbWUgdXNlcjEgbGFzdCBuYW1lIiwicHJlZmVycmVkX3VzZXJuYW1lIjoidXNlcjEiLCJnaXZlbl9uYW1lIjoidXNlcjEgZmlyc3QgbmFtZSIsImZhbWlseV9uYW1lIjoidXNlcjEgbGFzdCBuYW1lIiwiZW1haWwiOiJ1c2VyMUBnbWFpbC5jb20ifQ.zX4JuACTb8vOaiP70kr-TDecy4g1eUx9SQwa-n7u0wLTw07_TKR1GhretgtxZozOkwbsK6k50gglJIF5VD_w5ZQhvWNf6TvrcH8aukBNg4K5CDf0XfJfcvMkgz90SRaCn6n0Fb0AMufXyySxHuerCrif7msRU3eS4p6jjGwjsnmCxKcWBX_oDbdZL7QCFrT3rWVXocDm2ybFcd7QSzpPCAAVO6-6c9TLpTs0NX1AO6Gy7qo2c3ObmrxXLsmNj5DiEs8Al1E1ZuWGangjvboTNi-1NMANrKl3ZO2uD1Hx4puCDLOnsKwDMnGVsK9yd7siTG_bfvPvOA2MqpOI6CZBbg",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:9090/api/user",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9090",
+							"path": [
+								"api",
+								"user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "resource/user",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI1STlPMVB4MUtYUGk1bE9lTzJLVjN3RmZ1b1lsbnM4TVJ1VlpyczhxalhrIn0.eyJleHAiOjE3NDUxNTgwMjUsImlhdCI6MTc0NTE1NzcyNSwianRpIjoib25ydHJvOjdlZTE5YjY2LTg4ZjUtNGZkMy1iMDBlLTMyODVmODhlOTNjNiIsImlzcyI6Imh0dHBzOi8va2V5Y2xvYWsuZ3V2ZW4udWsvcmVhbG1zL2d1dmVuX3JlYWxtIiwiYXVkIjoiYWNjb3VudCIsInN1YiI6IjBhNjNmNjRjLTRmN2ItNGNlNy05MDk5LTg0ZjQxMDFiZjdlNSIsInR5cCI6IkJlYXJlciIsImF6cCI6ImZpcnN0X2FwcCIsInNpZCI6IjU5YzY2OGZlLTc3YzMtNGQ0Mi1hZTk2LWQxYTJhOTc3M2VmNCIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiaHR0cDovL2xvY2FsaG9zdDo4MDgwLyoiXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIm9mZmxpbmVfYWNjZXNzIiwiZGVmYXVsdC1yb2xlcy1maXJzdF9hcHBfcmVhbG0iLCJ1bWFfYXV0aG9yaXphdGlvbiIsInVzZXIiXX0sInJlc291cmNlX2FjY2VzcyI6eyJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6ImVtYWlsIHByb2ZpbGUiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwibmFtZSI6InVzZXIxIGZpcnN0IG5hbWUgdXNlcjEgbGFzdCBuYW1lIiwicHJlZmVycmVkX3VzZXJuYW1lIjoidXNlcjEiLCJnaXZlbl9uYW1lIjoidXNlcjEgZmlyc3QgbmFtZSIsImZhbWlseV9uYW1lIjoidXNlcjEgbGFzdCBuYW1lIiwiZW1haWwiOiJ1c2VyMUBnbWFpbC5jb20ifQ.zX4JuACTb8vOaiP70kr-TDecy4g1eUx9SQwa-n7u0wLTw07_TKR1GhretgtxZozOkwbsK6k50gglJIF5VD_w5ZQhvWNf6TvrcH8aukBNg4K5CDf0XfJfcvMkgz90SRaCn6n0Fb0AMufXyySxHuerCrif7msRU3eS4p6jjGwjsnmCxKcWBX_oDbdZL7QCFrT3rWVXocDm2ybFcd7QSzpPCAAVO6-6c9TLpTs0NX1AO6Gy7qo2c3ObmrxXLsmNj5DiEs8Al1E1ZuWGangjvboTNi-1NMANrKl3ZO2uD1Hx4puCDLOnsKwDMnGVsK9yd7siTG_bfvPvOA2MqpOI6CZBbg",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:9090/api/resources/881c2a8e-5c06-41e6-90d9-b68b687586b5",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9090",
+							"path": [
+								"api",
+								"resources",
+								"881c2a8e-5c06-41e6-90d9-b68b687586b5"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
