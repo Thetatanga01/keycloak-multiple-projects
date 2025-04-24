@@ -16,6 +16,7 @@ public class KeycloakJwtRoleConverter implements Converter<Jwt, Collection<Grant
     private static final String REALM_ACCESS = "realm_access";
     private static final String ROLES = "roles";
     private static final String RESOURCE_ACCESS = "resource_access";
+    public static final String APPENDIX = "STOCK_";
 
     @Override
     public Collection<GrantedAuthority> convert(Jwt jwt) {
@@ -27,7 +28,7 @@ public class KeycloakJwtRoleConverter implements Converter<Jwt, Collection<Grant
             List<String> roles = (List<String>) realmAccess.get(ROLES);
             if (roles != null) {
                 Collection<GrantedAuthority> realmRoles = roles.stream()
-                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                    .map(role -> new SimpleGrantedAuthority(APPENDIX + role))
                     .collect(Collectors.toList());
                 grantedAuthorities.addAll(realmRoles);
 
@@ -46,7 +47,7 @@ public class KeycloakJwtRoleConverter implements Converter<Jwt, Collection<Grant
                         List<String> clientRoles = (List<String>) clientAccessMap.get(ROLES);
                         if (clientRoles != null) {
                             Collection<GrantedAuthority> resourceRoles = clientRoles.stream()
-                                .map(role -> new SimpleGrantedAuthority("ROLE_" + clientId + "_" + role))
+                                .map(role -> new SimpleGrantedAuthority(APPENDIX + clientId + "_" + role))
                                 .collect(Collectors.toList());
                             grantedAuthorities.addAll(resourceRoles);
 

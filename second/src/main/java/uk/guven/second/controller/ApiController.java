@@ -1,11 +1,13 @@
 package uk.guven.second.controller;
 
+
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -57,15 +59,18 @@ public class ApiController {
         return ResponseEntity.ok(response);
     }
 
-    // ApiController içinde user endpoint'i için HTML çıktı ekleme
+
     @GetMapping(value = "/user", produces = MediaType.TEXT_HTML_VALUE)
     public String userEndpointHtml(Authentication authentication) {
         StringBuilder html = new StringBuilder();
-        html.append("<html><head><title>Kullanıcı Bilgileri</title>");
+        html.append("<html><head><title>Second App > Kullanıcı Bilgileri</title>");
         html.append("<style>");
         html.append("body { font-family: Arial, sans-serif; margin: 20px; }");
         html.append("h1 { color: #2c3e50; }");
+        html.append("h2 { color: #3498db; margin-top: 20px; }");
         html.append("pre { background-color: #f8f9fa; padding: 15px; border-radius: 5px; }");
+        html.append("ul { background-color: #f8f9fa; padding: 15px; border-radius: 5px; list-style-type: disc; margin-left: 20px; }");
+        html.append("li { margin-bottom: 5px; }");
         html.append(".btn { color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; margin-top: 20px; }");
         html.append(".logout-btn { background-color: #e74c3c; }");
         html.append(".navigate-btn { background-color: #6987ff; }");
@@ -73,8 +78,16 @@ public class ApiController {
         html.append(".navigate-btn:hover { background-color: #4965d0; }");
         html.append("</style>");
 
-        html.append("<h1>Kullanıcı Bilgileri</h1>");
+        html.append("<h1>Second App > Kullanıcı Bilgileri</h1>");
         html.append("<p>Hoş geldiniz, <strong>").append(authentication.getName()).append("</strong>!</p>");
+
+        // Kullanıcı rolleri bölümünü ekle
+        html.append("<h2>Kullanıcı Rolleri</h2>");
+        html.append("<ul>");
+        authentication.getAuthorities().forEach(authority -> {
+            html.append("<li>").append(authority.getAuthority()).append("</li>");
+        });
+        html.append("</ul>");
 
         html.append("<h2>Kimlik Doğrulama Detayları</h2>");
         html.append("<pre>");
@@ -91,6 +104,18 @@ public class ApiController {
             html.append("Issued At: ").append(jwt.getIssuedAt()).append("\n");
             html.append("Expires At: ").append(jwt.getExpiresAt()).append("\n");
             html.append("Email: ").append(jwt.getClaimAsString("email")).append("\n");
+
+            // Realm Access bilgilerini ekle
+            Map<String, Object> realmAccess = jwt.getClaimAsMap("realm_access");
+            if (realmAccess != null) {
+                html.append("\nRealm Roles: ").append(realmAccess.get("roles")).append("\n");
+            }
+
+            // Resource Access bilgilerini ekle
+            Map<String, Object> resourceAccess = jwt.getClaimAsMap("resource_access");
+            if (resourceAccess != null) {
+                html.append("\nResource Access: ").append(resourceAccess).append("\n");
+            }
         }
         // OAuth2 User ise OIDC bilgilerini ekle
         else if (authentication.getPrincipal() instanceof OAuth2User) {
@@ -99,15 +124,33 @@ public class ApiController {
             oauth2User.getAttributes().forEach((key, value) ->
                 html.append(key).append(": ").append(value).append("\n")
             );
+
+            // OidcUser ise ID Token bilgilerini göster
+            if (authentication.getPrincipal() instanceof OidcUser) {
+                OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
+
+                html.append("\nRaw ID Token Claims:\n");
+                html.append(oidcUser.getIdToken().getClaims());
+
+                // Realm Access'i özel olarak ekle (varsa)
+                Map<String, Object> claims = oidcUser.getIdToken().getClaims();
+                if (claims.containsKey("realm_access")) {
+                    Map<String, Object> realmAccess = (Map<String, Object>) claims.get("realm_access");
+                    if (realmAccess != null && realmAccess.containsKey("roles")) {
+                        html.append("\nRealm Roles (from ID Token): ").append(realmAccess.get("roles")).append("\n");
+                    }
+                }
+            }
         }
 
         html.append("</pre>");
 
         //navigate butonunu ekle
-        html.append("<a href=\"http://localhost:8080/api/user\"><button class=\"navigate-btn\">First App'e git </button></a>");
+        html.append("<a href=\"http://localhost:8080/api/user\"><button class=\"btn navigate-btn\">First App'e git</button></a>");
+
         html.append("&nbsp;"); // Boşluk ekle
         // Logout butonunu ekle
-        html.append("<a href=\"/api/auth/logout\"><button class=\"logout-btn\">Çıkış Yap</button></a>");
+        html.append("<a href=\"/api/auth/logout\"><button class=\"btn logout-btn\">Çıkış Yap</button></a>");
 
         html.append("</body></html>");
         return html.toString();
@@ -157,6 +200,20 @@ public class ApiController {
             OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
             response.put("oauth2_attributes", oauth2User.getAttributes());
             response.put("email", oauth2User.getAttribute("email"));
+
+            // OidcUser ise
+            if (authentication.getPrincipal() instanceof OidcUser) {
+                OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
+                Map<String, Object> idTokenClaims = new HashMap<>(oidcUser.getIdToken().getClaims());
+
+                // Realm rolleri için özel işleme
+                if (idTokenClaims.containsKey("realm_access")) {
+                    Map<String, Object> realmAccess = (Map<String, Object>) idTokenClaims.get("realm_access");
+                    response.put("realm_roles", realmAccess.get("roles"));
+                }
+
+                response.put("id_token_claims", idTokenClaims);
+            }
         }
 
         // Sunucu bilgilerini ekle
@@ -169,6 +226,7 @@ public class ApiController {
         return ResponseEntity.ok(response);
     }
 
+
     // ApiController'da navigate metoduna logout linki ekleyin
     @GetMapping(value = "/navigate", produces = MediaType.TEXT_HTML_VALUE)
     public String navigateEndpoint() {
@@ -180,6 +238,7 @@ public class ApiController {
             "</body>" +
             "</html>";
     }
+
     @GetMapping("/admin")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> adminEndpoint(@AuthenticationPrincipal Jwt jwt) {
@@ -241,6 +300,20 @@ public class ApiController {
         }
 
         response.put("token_roles", jwt.getClaimAsStringList("roles"));
+        return ResponseEntity.ok(response);
+    }
+
+    // ApiController içinde
+    @GetMapping("/whoami")
+    public ResponseEntity<Map<String, Object>> whoAmI(Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("username", authentication.getName());
+        response.put("authorities", authentication.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .collect(Collectors.toList()));
+        response.put("details", authentication.getDetails());
+        response.put("authenticated", authentication.isAuthenticated());
+
         return ResponseEntity.ok(response);
     }
 }
