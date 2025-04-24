@@ -16,7 +16,7 @@ public class KeycloakJwtRoleConverter implements Converter<Jwt, Collection<Grant
     private static final String REALM_ACCESS = "realm_access";
     private static final String ROLES = "roles";
     private static final String RESOURCE_ACCESS = "resource_access";
-    public static final String APPENDIX = "STOCK_";
+    public static final String APPENDIX = "SOT_";
 
     @Override
     public Collection<GrantedAuthority> convert(Jwt jwt) {
