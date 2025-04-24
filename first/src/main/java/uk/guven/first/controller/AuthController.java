@@ -1,12 +1,11 @@
 package uk.guven.first.controller;
 
-import uk.guven.first.service.KeycloakService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import uk.guven.first.service.KeycloakService;
 
 import java.util.Map;
 
@@ -16,7 +15,6 @@ public class AuthController {
 
     private final KeycloakService keycloakService;
 
-    @Autowired
     public AuthController(KeycloakService keycloakService) {
         this.keycloakService = keycloakService;
     }

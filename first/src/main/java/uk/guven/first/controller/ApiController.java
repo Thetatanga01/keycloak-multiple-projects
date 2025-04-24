@@ -1,4 +1,5 @@
 package uk.guven.first.controller;
+
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -7,7 +8,10 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,10 +22,37 @@ import java.util.stream.Collectors;
 
 public class ApiController {
 
-    @GetMapping("/public")
+    @GetMapping(value = "/public", produces = MediaType.TEXT_HTML_VALUE)
+    public String publicEndpointHtml() {
+        StringBuilder html = new StringBuilder();
+        html.append("<html><head><title>Public Endpoint</title>");
+        html.append("<style>");
+        html.append("body { font-family: Arial, sans-serif; margin: 20px; }");
+        html.append("h1 { color: #2c3e50; }");
+        html.append("p { font-size: 16px; line-height: 1.6; }");
+        html.append(".card { background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin-top: 20px; }");
+        html.append(".btn { color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; margin-top: 20px; }");
+        html.append(".login-btn { background-color: #2ecc71; }");
+        html.append(".login-btn:hover { background-color: #27ae60; }");
+        html.append("</style></head><body>");
+
+        html.append("<h1>Herkese Açık Sayfa</h1>");
+        html.append("<div class=\"card\">");
+        html.append("<p>public sayfa, herkes erişebilir.</p>");
+        html.append("</div>");
+
+        // Login butonunu ekle
+        html.append("<a href=\"/login\"><button class=\"btn login-btn\">Giriş Yap</button></a>");
+
+        html.append("</body></html>");
+        return html.toString();
+    }
+
+    // JSON isteyen client'lar için orijinal metodu da tutalım
+    @GetMapping(value = "/public", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, Object>> publicEndpoint() {
         Map<String, Object> response = new HashMap<>();
-        response.put("message", "Bu bir halka açık endpoint'tir. Herkes erişebilir.");
+        response.put("message", "public endpoint. Herkes erişebilir.");
         response.put("status", "success");
         return ResponseEntity.ok(response);
     }
@@ -81,6 +112,62 @@ public class ApiController {
 
         html.append("</body></html>");
         return html.toString();
+    }
+
+    @GetMapping(value = "/user", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Map<String, Object>> userEndpoint(Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
+
+        // Temel bilgiler
+        response.put("message", "Bu bir kullanıcı endpoint'idir. Başarıyla erişildi.");
+        response.put("username", authentication.getName());
+        response.put("principal_type", authentication.getPrincipal().getClass().getName());
+
+        // Yetkileri ekle
+        response.put("authorities", authentication.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .collect(Collectors.toList()));
+
+        // JWT veya OAuth2 spesifik bilgileri ekle
+        if (authentication.getPrincipal() instanceof Jwt) {
+            Jwt jwt = (Jwt) authentication.getPrincipal();
+
+            Map<String, Object> jwtInfo = new HashMap<>();
+            jwtInfo.put("subject", jwt.getSubject());
+            jwtInfo.put("issuer", jwt.getIssuer().toString());
+            jwtInfo.put("issuedAt", jwt.getIssuedAt());
+            jwtInfo.put("expiresAt", jwt.getExpiresAt());
+            jwtInfo.put("email", jwt.getClaimAsString("email"));
+
+            // JWT'den realm_access bilgilerini ekle
+            Map<String, Object> realmAccess = jwt.getClaimAsMap("realm_access");
+            if (realmAccess != null) {
+                jwtInfo.put("realm_roles", realmAccess.get("roles"));
+            }
+
+            // JWT'den resource_access bilgilerini ekle
+            Map<String, Object> resourceAccess = jwt.getClaimAsMap("resource_access");
+            if (resourceAccess != null) {
+                jwtInfo.put("resource_access", resourceAccess);
+            }
+
+            response.put("jwt_details", jwtInfo);
+        }
+        // OAuth2 User bilgilerini ekle
+        else if (authentication.getPrincipal() instanceof OAuth2User) {
+            OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
+            response.put("oauth2_attributes", oauth2User.getAttributes());
+            response.put("email", oauth2User.getAttribute("email"));
+        }
+
+        // Sunucu bilgilerini ekle
+        Map<String, String> links = new HashMap<>();
+        links.put("second_app", "http://localhost:9090/api/user");
+        links.put("logout", "/api/auth/logout");
+        response.put("links", links);
+
+        response.put("status", "success");
+        return ResponseEntity.ok(response);
     }
 
     // ApiController'da navigate metoduna logout linki ekleyin

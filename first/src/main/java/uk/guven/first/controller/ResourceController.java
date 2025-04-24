@@ -1,13 +1,13 @@
 package uk.guven.first.controller;
-import uk.guven.first.model.Resource;
-import uk.guven.first.service.ResourceService;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import uk.guven.first.model.Resource;
+import uk.guven.first.service.ResourceService;
 
 import java.util.HashMap;
 import java.util.List;
@@ -19,7 +19,6 @@ public class ResourceController {
 
     private final ResourceService resourceService;
 
-    @Autowired
     public ResourceController(ResourceService resourceService) {
         this.resourceService = resourceService;
     }

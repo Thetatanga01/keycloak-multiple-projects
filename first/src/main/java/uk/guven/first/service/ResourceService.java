@@ -1,13 +1,9 @@
 package uk.guven.first.service;
 
-import uk.guven.first.model.Resource;
 import org.springframework.stereotype.Service;
+import uk.guven.first.model.Resource;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class ResourceService {
