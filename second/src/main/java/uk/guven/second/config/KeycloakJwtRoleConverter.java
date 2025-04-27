@@ -16,7 +16,9 @@ public class KeycloakJwtRoleConverter implements Converter<Jwt, Collection<Grant
     private static final String REALM_ACCESS = "realm_access";
     private static final String ROLES = "roles";
     private static final String RESOURCE_ACCESS = "resource_access";
-    public static final String APPENDIX = "SOT_";
+    private static final String GROUPS = "groups";
+    public static final String APPENDIX = "STOCK_";
+    public static final String GROUP_PREFIX = "GROUP_";
 
     @Override
     public Collection<GrantedAuthority> convert(Jwt jwt) {
@@ -57,6 +59,18 @@ public class KeycloakJwtRoleConverter implements Converter<Jwt, Collection<Grant
                     }
                 }
             });
+        }
+
+        // AD Gruplarını ekleyelim
+        List<String> groups = jwt.getClaimAsStringList(GROUPS);
+        if (groups != null && !groups.isEmpty()) {
+            Collection<GrantedAuthority> groupAuthorities = groups.stream()
+                .map(group -> new SimpleGrantedAuthority(GROUP_PREFIX + group))
+                .collect(Collectors.toList());
+            grantedAuthorities.addAll(groupAuthorities);
+
+            // Debug için grupları yazdıralım
+            System.out.println("User Groups: " + groups);
         }
 
         System.out.println("Granted Authorities: " + grantedAuthorities);

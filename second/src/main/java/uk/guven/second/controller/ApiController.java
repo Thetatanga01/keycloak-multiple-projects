@@ -1,6 +1,5 @@
 package uk.guven.second.controller;
 
-
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -63,7 +62,7 @@ public class ApiController {
     @GetMapping(value = "/user", produces = MediaType.TEXT_HTML_VALUE)
     public String userEndpointHtml(Authentication authentication) {
         StringBuilder html = new StringBuilder();
-        html.append("<html><head><title>Second App > Kullanıcı Bilgileri</title>");
+        html.append("<html><head><title>Kullanıcı Bilgileri</title>");
         html.append("<style>");
         html.append("body { font-family: Arial, sans-serif; margin: 20px; }");
         html.append("h1 { color: #2c3e50; }");
@@ -84,8 +83,19 @@ public class ApiController {
         // Kullanıcı rolleri bölümünü ekle
         html.append("<h2>Kullanıcı Rolleri</h2>");
         html.append("<ul>");
+
+        // Tüm yetkileri ve grupları göster
         authentication.getAuthorities().forEach(authority -> {
-            html.append("<li>").append(authority.getAuthority()).append("</li>");
+            String authorityName = authority.getAuthority();
+
+            // Grup mu yoksa rol mü olduğunu kontrol et ve farklı şekilde göster
+            if (authorityName.startsWith("GROUP_")) {
+                html.append("<li><strong>AD Grubu:</strong> ").append(authorityName.substring(6)).append("</li>");
+            } else if (authorityName.startsWith("STOCK_")) {
+                html.append("<li><strong>Keycloak Rolü:</strong> ").append(authorityName.substring(6)).append("</li>");
+            } else {
+                html.append("<li><strong>Diğer Yetki:</strong> ").append(authorityName).append("</li>");
+            }
         });
         html.append("</ul>");
 
@@ -218,7 +228,7 @@ public class ApiController {
 
         // Sunucu bilgilerini ekle
         Map<String, String> links = new HashMap<>();
-        links.put("second_app", "http://localhost:9090/api/user");
+        links.put("second_app", "http://localhost:8080/api/user");
         links.put("logout", "/api/auth/logout");
         response.put("links", links);
 
@@ -233,7 +243,7 @@ public class ApiController {
         return "<html>" +
             "<head><title>API Navigation</title></head>" +
             "<body>" +
-            "<a href=\"http://localhost:9090/api/user\">Go to Second App's User Endpoint</a><br>" +
+            "<a href=\"http://localhost:8080/api/user\">Go to First App's User Endpoint</a><br>" +
             "<a href=\"/api/auth/logout\">Logout</a>" +
             "</body>" +
             "</html>";

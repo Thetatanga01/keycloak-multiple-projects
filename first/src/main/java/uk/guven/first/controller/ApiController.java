@@ -62,7 +62,7 @@ public class ApiController {
     @GetMapping(value = "/user", produces = MediaType.TEXT_HTML_VALUE)
     public String userEndpointHtml(Authentication authentication) {
         StringBuilder html = new StringBuilder();
-        html.append("<html><head><title>First App > Kullanıcı Bilgileri</title>");
+        html.append("<html><head><title>Kullanıcı Bilgileri</title>");
         html.append("<style>");
         html.append("body { font-family: Arial, sans-serif; margin: 20px; }");
         html.append("h1 { color: #2c3e50; }");
@@ -83,8 +83,19 @@ public class ApiController {
         // Kullanıcı rolleri bölümünü ekle
         html.append("<h2>Kullanıcı Rolleri</h2>");
         html.append("<ul>");
+
+        // Tüm yetkileri ve grupları göster
         authentication.getAuthorities().forEach(authority -> {
-            html.append("<li>").append(authority.getAuthority()).append("</li>");
+            String authorityName = authority.getAuthority();
+
+            // Grup mu yoksa rol mü olduğunu kontrol et ve farklı şekilde göster
+            if (authorityName.startsWith("GROUP_")) {
+                html.append("<li><strong>AD Grubu:</strong> ").append(authorityName.substring(6)).append("</li>");
+            } else if (authorityName.startsWith("STOCK_")) {
+                html.append("<li><strong>Keycloak Rolü:</strong> ").append(authorityName.substring(6)).append("</li>");
+            } else {
+                html.append("<li><strong>Diğer Yetki:</strong> ").append(authorityName).append("</li>");
+            }
         });
         html.append("</ul>");
 

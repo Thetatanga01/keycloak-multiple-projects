@@ -59,14 +59,21 @@ public class KeycloakOAuth2Config {
                 roles.forEach(role ->
                     authorities.add(new SimpleGrantedAuthority(KeycloakJwtRoleConverter.APPENDIX + role))
                 );
-            } else {
-                System.out.println("No roles found in realm_access");
             }
-        } else {
-            System.out.println("No realm_access in token");
         }
 
-        // Daha fazla debug ekleyin...
+        // Active Directory gruplarını çıkar (groups claim'i)
+        List<String> groups = (List<String>) claims.get("groups");
+        if (groups != null && !groups.isEmpty()) {
+            System.out.println("User Groups: " + groups);
+            groups.forEach(group ->
+                authorities.add(new SimpleGrantedAuthority(KeycloakJwtRoleConverter.GROUP_PREFIX + group))
+            );
+        }
+
+        // Debug için yetkileri yazdır
+        System.out.println("Extracted Authorities: " + authorities);
+
         return authorities;
     }
 }
