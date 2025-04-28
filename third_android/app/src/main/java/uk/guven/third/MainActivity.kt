@@ -1,137 +1,111 @@
 package uk.guven.third
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
-import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import uk.guven.third.api.ApiClient
-import uk.guven.third.auth.AuthService
+import net.openid.appauth.AuthorizationException
+import net.openid.appauth.AuthorizationRequest
+import net.openid.appauth.AuthorizationResponse
+import net.openid.appauth.AuthorizationService
+import net.openid.appauth.AuthState
+import net.openid.appauth.ResponseTypeValues
+import net.openid.appauth.TokenResponse
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var authService: AuthService
-    private lateinit var apiClient: ApiClient
+    companion object {
+        private const val AUTH_REQUEST_CODE = 1001
+        private const val AUTH_ENDPOINT = "https://keycloak.guven.uk/realms/guven_realm/protocol/openid-connect/auth"
+        private const val TOKEN_ENDPOINT = "https://keycloak.guven.uk/realms/guven_realm/protocol/openid-connect/token"
+        private const val CLIENT_ID = "third_app"
+        private const val REDIRECT_URI = "uk.guven.third:/oauth2callback"
+    }
+
+    private lateinit var authService: AuthorizationService
+    private var authState: AuthState = AuthState()
 
     private lateinit var loginButton: Button
     private lateinit var logoutButton: Button
     private lateinit var userInfoTextView: TextView
-    private lateinit var apiCallButton: Button
-    private lateinit var apiResponseTextView: TextView
-    private lateinit var progressBar: ProgressBar
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // View bileşenlerini başlat
+        authService = AuthorizationService(this)
+
         loginButton = findViewById(R.id.login_button)
         logoutButton = findViewById(R.id.logout_button)
         userInfoTextView = findViewById(R.id.user_info_text)
-        apiCallButton = findViewById(R.id.api_call_button)
-        apiResponseTextView = findViewById(R.id.api_response_text)
-        progressBar = findViewById(R.id.progress_bar)
 
-        // Servisleri başlat
-        authService = AuthService(this)
-        apiClient = ApiClient()
-
-        // Buton işlevlerini ayarla
-        loginButton.setOnClickListener { startLogin() }
+        loginButton.setOnClickListener { launchLogin() }
         logoutButton.setOnClickListener { performLogout() }
-        apiCallButton.setOnClickListener { callSecuredApi() }
 
-        // Oturum durumunu kontrol et ve UI'yi güncelle
         updateUIBasedOnAuthState()
     }
 
-    override fun onResume() {
-        super.onResume()
-        // Aktivite yeniden görünür olduğunda durumu güncelle
+    private fun launchLogin() {
+        val serviceConfig = net.openid.appauth.AuthorizationServiceConfiguration(
+            Uri.parse(AUTH_ENDPOINT), Uri.parse(TOKEN_ENDPOINT)
+        )
+        val authRequest = AuthorizationRequest.Builder(
+            serviceConfig,
+            CLIENT_ID,
+            ResponseTypeValues.CODE,
+            Uri.parse(REDIRECT_URI)
+        )
+            .setScope("openid profile email")
+            .build()
+
+        val authIntent = authService.getAuthorizationRequestIntent(authRequest)
+        startActivityForResult(authIntent, AUTH_REQUEST_CODE)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == AUTH_REQUEST_CODE) {
+            val response = AuthorizationResponse.fromIntent(data!!)
+            val exception = AuthorizationException.fromIntent(data)
+            authState.update(response, exception)
+
+            if (response != null) {
+                val tokenRequest = response.createTokenExchangeRequest()
+                authService.performTokenRequest(tokenRequest) { tokenResponse, tokenException ->
+                    authState.update(tokenResponse, tokenException)
+                    runOnUiThread { updateUIBasedOnAuthState() }
+                }
+            } else {
+                Toast.makeText(this, "Giriş başarısız", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun performLogout() {
+        // Token’lar SharedPreferences’a kaydediliyorsa orayı da temizle
+        val prefs = getSharedPreferences("auth_prefs", MODE_PRIVATE).edit()
+        prefs.clear().apply()
+
+        // AuthState’i baştan oluştur
+        authState = AuthState()
         updateUIBasedOnAuthState()
     }
 
     private fun updateUIBasedOnAuthState() {
-        val isLoggedIn = authService.isLoggedIn()
+        val isLoggedIn = authState.isAuthorized &&
+                (authState.accessTokenExpirationTime ?: 0) > System.currentTimeMillis()
 
         loginButton.visibility = if (isLoggedIn) View.GONE else View.VISIBLE
         logoutButton.visibility = if (isLoggedIn) View.VISIBLE else View.GONE
-        apiCallButton.visibility = if (isLoggedIn) View.VISIBLE else View.GONE
 
-        if (isLoggedIn) {
-            // Kullanıcı bilgilerini göster
-            val userInfo = authService.getUserInfo()
-            val username = userInfo["preferred_username"] as? String ?: "Bilinmeyen Kullanıcı"
-            val email = userInfo["email"] as? String ?: "Email bulunamadı"
-            val roles = when (val realmAccess = userInfo["realm_access"]) {
-                is Map<*, *> -> (realmAccess["roles"] as? List<*>)?.joinToString(", ") ?: "Rol bulunamadı"
-                else -> "Rol bulunamadı"
-            }
-
-            userInfoTextView.text = """
-                Hoş geldiniz, $username!
-                Email: $email
-                Roller: $roles
-            """.trimIndent()
+        userInfoTextView.text = if (isLoggedIn) {
+            "Giriş başarılı"
         } else {
-            userInfoTextView.text = "Giriş yapılmadı"
-            apiResponseTextView.text = ""
-        }
-    }
-
-    private fun startLogin() {
-        val loginIntent = authService.getLoginIntent()
-        startActivity(loginIntent)
-    }
-
-    private fun performLogout() {
-        progressBar.visibility = View.VISIBLE
-        authService.logout { success ->
-            runOnUiThread {
-                progressBar.visibility = View.GONE
-                if (success) {
-                    Toast.makeText(this, "Çıkış başarılı", Toast.LENGTH_SHORT).show()
-                    updateUIBasedOnAuthState()
-                } else {
-                    Toast.makeText(this, "Çıkış sırasında hata oluştu", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
-
-    private fun callSecuredApi() {
-        progressBar.visibility = View.VISIBLE
-
-        authService.getValidAccessToken { token ->
-            if (token != null) {
-                CoroutineScope(Dispatchers.IO).launch {
-                    try {
-                        val response = apiClient.callSecuredEndpoint(token)
-                        withContext(Dispatchers.Main) {
-                            progressBar.visibility = View.GONE
-                            apiResponseTextView.text = "API Yanıtı:\n$response"
-                        }
-                    } catch (e: Exception) {
-                        withContext(Dispatchers.Main) {
-                            progressBar.visibility = View.GONE
-                            apiResponseTextView.text = "Hata: ${e.message}"
-                        }
-                    }
-                }
-            } else {
-                runOnUiThread {
-                    progressBar.visibility = View.GONE
-                    Toast.makeText(this, "Geçerli token alınamadı", Toast.LENGTH_SHORT).show()
-                    // Token alınamadıysa yeniden login gerekebilir
-                    updateUIBasedOnAuthState()
-                }
-            }
+            "Giriş yapılmadı"
         }
     }
 }

@@ -2,6 +2,7 @@ package uk.guven.third.auth
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import uk.guven.third.MainActivity
@@ -25,13 +26,17 @@ class AuthenticationActivity : AppCompatActivity() {
     }
 
     private fun handleAuthResponse(intent: Intent) {
+        // Debug için
+        val data = intent.data
+        Log.d("AuthDebug", "Received callback: ${data?.toString()}")
+        Log.d("AuthDebug", "Query params: ${data?.query}")
+
         authService.handleAuthResponseAndGetToken(intent) { success ->
+            Log.d("AuthDebug", "Auth result: $success")
             if (success) {
-                // Kimlik doğrulama başarılı, ana ekrana yönlendir
                 Toast.makeText(this, "Giriş başarılı", Toast.LENGTH_SHORT).show()
-                startMainActivity()
+                finish()   // sadece bitir, MainActivity’ye dön
             } else {
-                // Kimlik doğrulama başarısız
                 Toast.makeText(this, "Giriş başarısız", Toast.LENGTH_SHORT).show()
                 finish()
             }

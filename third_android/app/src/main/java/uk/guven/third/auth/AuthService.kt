@@ -1,16 +1,16 @@
 package uk.guven.third.auth
 
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import net.openid.appauth.*
 import net.openid.appauth.browser.BrowserAllowList
 import net.openid.appauth.browser.VersionedBrowserMatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import com.auth0.android.jwt.JWT
 import java.util.concurrent.atomic.AtomicReference
 
@@ -100,40 +100,26 @@ class AuthService(private val context: Context) {
         }
     }
 
-    /**
-     * Kimlik doğrulama işlemini başlatır
-     * @return Oturum açma sayfasını açmak için gereken Intent
-     */
-    fun getLoginIntent(): Intent {
+    fun login() {
         val serviceConfig = AuthorizationServiceConfiguration(
-            Uri.parse(AUTH_ENDPOINT),
-            Uri.parse(TOKEN_ENDPOINT)
+            Uri.parse(AUTH_ENDPOINT), Uri.parse(TOKEN_ENDPOINT)
         )
-
-        val authRequestBuilder = AuthorizationRequest.Builder(
-            serviceConfig,
-            CLIENT_ID,
-            ResponseTypeValues.CODE,
-            Uri.parse(REDIRECT_URI)
+        val authRequest = AuthorizationRequest.Builder(
+            serviceConfig, CLIENT_ID, ResponseTypeValues.CODE, Uri.parse(REDIRECT_URI)
         )
-
-        val authRequest = authRequestBuilder
             .setScope("openid profile email")
             .setPrompt("login")
             .build()
 
-        val customTabIntent = CustomTabsIntent.Builder().build()
-        val authService = AuthorizationService(context, AppAuthConfiguration.Builder()
-            .setBrowserMatcher(
-                BrowserAllowList(
-                    VersionedBrowserMatcher.CHROME_CUSTOM_TAB,
-                    VersionedBrowserMatcher.SAMSUNG_CUSTOM_TAB
-                )
-            )
-            .build())
-
-        return authService.getAuthorizationRequestIntent(authRequest, customTabIntent)
+        val authService = AuthorizationService(context)
+        val callbackIntent = Intent(context, AuthenticationActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            context, 0, callbackIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+        )
+        authService.performAuthorizationRequest(authRequest, pendingIntent)
     }
+
 
     /**
      * Yetkilendirme kodu yanıtını işler ve token alır
@@ -144,21 +130,37 @@ class AuthService(private val context: Context) {
         val response = AuthorizationResponse.fromIntent(intent)
         val exception = AuthorizationException.fromIntent(intent)
 
+        Log.d("AuthDebug", "Auth response: $response")
+        Log.d("AuthDebug", "Auth exception: ${exception?.message} (${exception?.code})")
+
         if (response != null) {
             authState.get().update(response, exception)
-
             val authService = AuthorizationService(context)
-            authService.performTokenRequest(response.createTokenExchangeRequest()) { tokenResponse, tokenException ->
-                if (tokenResponse != null) {
-                    authState.get().update(tokenResponse, tokenException)
-                    saveAuthState(tokenResponse)
-                    callback(true)
-                } else {
-                    callback(false)
+
+            try {
+                val tokenRequest = response.createTokenExchangeRequest()
+                Log.d("AuthDebug", "Token request created: $tokenRequest")
+
+                authService.performTokenRequest(tokenRequest) { tokenResponse, tokenException ->
+                    Log.d("AuthDebug", "Token response: $tokenResponse")
+                    Log.d("AuthDebug", "Token exception: ${tokenException?.message} (${tokenException?.code})")
+
+                    if (tokenResponse != null) {
+                        authState.get().update(tokenResponse, tokenException)
+                        saveAuthState(tokenResponse)
+                        callback(true)
+                    } else {
+                        callback(false)
+                    }
+                    authService.dispose()
                 }
+            } catch (e: Exception) {
+                Log.e("AuthDebug", "Error creating token request: ${e.message}")
+                callback(false)
                 authService.dispose()
             }
         } else {
+            Log.e("AuthDebug", "No auth response in intent")
             callback(false)
         }
     }
