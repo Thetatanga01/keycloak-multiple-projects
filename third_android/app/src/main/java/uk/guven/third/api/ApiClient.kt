@@ -6,8 +6,8 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 
 interface ApiService {
-    @GET("/api/user")
-    suspend fun getUserInfo(@Header("Authorization") authorization: String): Map<String, Any>
+    @GET("realms/guven_realm/protocol/openid-connect/userinfo")
+    suspend fun getUserInfo(@Header("Authorization") auth: String): Map<String, Any>
 
     @GET("/api/resources")
     suspend fun getResources(@Header("Authorization") authorization: String): List<Map<String, Any>>
@@ -15,7 +15,7 @@ interface ApiService {
 
 class ApiClient {
     companion object {
-        private const val BASE_URL = "http://keycloak.guven.uk:9090/" // Spring Boot backend URL
+        private const val BASE_URL = "https://keycloak.guven.uk/" // Spring Boot backend URL
     }
 
     private val retrofit: Retrofit by lazy {

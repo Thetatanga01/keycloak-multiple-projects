@@ -5,9 +5,14 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.openid.appauth.AuthorizationException
 import net.openid.appauth.AuthorizationRequest
 import net.openid.appauth.AuthorizationResponse
@@ -15,6 +20,7 @@ import net.openid.appauth.AuthorizationService
 import net.openid.appauth.AuthState
 import net.openid.appauth.ResponseTypeValues
 import net.openid.appauth.TokenResponse
+import uk.guven.third.api.ApiClient
 
 class MainActivity : AppCompatActivity() {
 
@@ -28,10 +34,14 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var authService: AuthorizationService
     private var authState: AuthState = AuthState()
+    private val apiClient = ApiClient()
 
     private lateinit var loginButton: Button
     private lateinit var logoutButton: Button
+    private lateinit var apiCallButton: Button
     private lateinit var userInfoTextView: TextView
+    private lateinit var apiResponseTextView: TextView
+    private lateinit var progressBar: ProgressBar
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,10 +51,14 @@ class MainActivity : AppCompatActivity() {
 
         loginButton = findViewById(R.id.login_button)
         logoutButton = findViewById(R.id.logout_button)
+        apiCallButton = findViewById(R.id.api_call_button)
         userInfoTextView = findViewById(R.id.user_info_text)
+        apiResponseTextView = findViewById(R.id.api_response_text)
+        progressBar = findViewById(R.id.progress_bar)
 
         loginButton.setOnClickListener { launchLogin() }
         logoutButton.setOnClickListener { performLogout() }
+        apiCallButton.setOnClickListener { callSecuredApi() }
 
         updateUIBasedOnAuthState()
     }
@@ -85,12 +99,37 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun performLogout() {
-        // Token’lar SharedPreferences’a kaydediliyorsa orayı da temizle
-        val prefs = getSharedPreferences("auth_prefs", MODE_PRIVATE).edit()
-        prefs.clear().apply()
+    private fun callSecuredApi() {
+        progressBar.visibility = View.VISIBLE
+        val token = authState.accessToken
+        if (token.isNullOrEmpty()) {
+            progressBar.visibility = View.GONE
+            Toast.makeText(this, "Token yok, lütfen giriş yapın", Toast.LENGTH_SHORT).show()
+            return
+        }
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val infoMap = apiClient.callSecuredEndpoint(token)
+                val sb = StringBuilder().apply {
+                    infoMap.forEach { (k, v) ->
+                        append("$k: $v\n")
+                    }
+                }
+                withContext(Dispatchers.Main) {
+                    progressBar.visibility = View.GONE
+                    apiResponseTextView.text = sb.toString()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    progressBar.visibility = View.GONE
+                    apiResponseTextView.text = "Hata: ${e.message}"
+                }
+            }
+        }
+    }
 
-        // AuthState’i baştan oluştur
+    private fun performLogout() {
+        // SharedPreferences temizleniyorsa burada ekleyin
         authState = AuthState()
         updateUIBasedOnAuthState()
     }
@@ -101,11 +140,13 @@ class MainActivity : AppCompatActivity() {
 
         loginButton.visibility = if (isLoggedIn) View.GONE else View.VISIBLE
         logoutButton.visibility = if (isLoggedIn) View.VISIBLE else View.GONE
+        apiCallButton.visibility = if (isLoggedIn) View.VISIBLE else View.GONE
 
-        userInfoTextView.text = if (isLoggedIn) {
-            "Giriş başarılı"
+        if (isLoggedIn) {
+            userInfoTextView.text = "Token alındı, API çağrısı yapabilirsiniz"
         } else {
-            "Giriş yapılmadı"
+            userInfoTextView.text = "Giriş yapılmadı"
+            apiResponseTextView.text = ""
         }
     }
 }
