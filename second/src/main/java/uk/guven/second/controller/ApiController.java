@@ -1,5 +1,6 @@
 package uk.guven.second.controller;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,6 +23,9 @@ import java.util.stream.Collectors;
 @RequestMapping("/api")
 
 public class ApiController {
+
+    @Value("${other.url}")
+    private String otherUrl;
 
     @GetMapping(value = "/public", produces = MediaType.TEXT_HTML_VALUE)
     public String publicEndpointHtml() {
@@ -156,7 +160,8 @@ public class ApiController {
         html.append("</pre>");
 
         //navigate butonunu ekle
-        html.append("<a href=\"http://localhost:8080/api/user\"><button class=\"btn navigate-btn\">First App'e git</button></a>");
+        html.append("<a href=\"" + otherUrl + "/api/user\">" +
+                "<button class=\"btn navigate-btn\">First App'e git</button></a>");
 
         html.append("&nbsp;"); // Boşluk ekle
         // Logout butonunu ekle

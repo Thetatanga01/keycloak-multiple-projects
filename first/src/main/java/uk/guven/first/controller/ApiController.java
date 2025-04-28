@@ -1,5 +1,6 @@
 package uk.guven.first.controller;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,6 +23,9 @@ import java.util.stream.Collectors;
 @RequestMapping("/api")
 
 public class ApiController {
+
+    @Value("${other.url}")
+    private String otherUrl;
 
     @GetMapping(value = "/public", produces = MediaType.TEXT_HTML_VALUE)
     public String publicEndpointHtml() {
@@ -132,7 +136,7 @@ public class ApiController {
             OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
             html.append("\nOAuth2 User Attributes:\n");
             oauth2User.getAttributes().forEach((key, value) ->
-                html.append(key).append(": ").append(value).append("\n")
+                    html.append(key).append(": ").append(value).append("\n")
             );
 
             // OidcUser ise ID Token bilgilerini göster
@@ -156,7 +160,8 @@ public class ApiController {
         html.append("</pre>");
 
         //navigate butonunu ekle
-        html.append("<a href=\"http://localhost:9090/api/user\"><button class=\"btn navigate-btn\">Second App'e git</button></a>");
+        html.append("<a href=\"" + otherUrl + "/api/user\">" +
+                "<button class=\"btn navigate-btn\">Second App'e git</button></a>");
 
         html.append("&nbsp;"); // Boşluk ekle
         // Logout butonunu ekle
@@ -177,8 +182,8 @@ public class ApiController {
 
         // Yetkileri ekle
         response.put("authorities", authentication.getAuthorities().stream()
-            .map(GrantedAuthority::getAuthority)
-            .collect(Collectors.toList()));
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList()));
 
         // JWT veya OAuth2 spesifik bilgileri ekle
         if (authentication.getPrincipal() instanceof Jwt) {
@@ -241,12 +246,12 @@ public class ApiController {
     @GetMapping(value = "/navigate", produces = MediaType.TEXT_HTML_VALUE)
     public String navigateEndpoint() {
         return "<html>" +
-            "<head><title>API Navigation</title></head>" +
-            "<body>" +
-            "<a href=\"http://localhost:9090/api/user\">Go to Second App's User Endpoint</a><br>" +
-            "<a href=\"/api/auth/logout\">Logout</a>" +
-            "</body>" +
-            "</html>";
+                "<head><title>API Navigation</title></head>" +
+                "<body>" +
+                "<a href=\"http://localhost:9090/api/user\">Go to Second App's User Endpoint</a><br>" +
+                "<a href=\"/api/auth/logout\">Logout</a>" +
+                "</body>" +
+                "</html>";
     }
 
     @GetMapping("/admin")
@@ -319,8 +324,8 @@ public class ApiController {
         Map<String, Object> response = new HashMap<>();
         response.put("username", authentication.getName());
         response.put("authorities", authentication.getAuthorities().stream()
-            .map(GrantedAuthority::getAuthority)
-            .collect(Collectors.toList()));
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList()));
         response.put("details", authentication.getDetails());
         response.put("authenticated", authentication.isAuthenticated());
 
