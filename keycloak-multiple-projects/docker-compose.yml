@@ -1,0 +1,62 @@
+services:
+    # First Spring Boot Uygulaması
+    first-backend:
+        build:
+            context: ../first
+            dockerfile: Dockerfile
+        container_name: first-backend
+        ports:
+            - "8080:8080"
+        environment:
+            - SPRING_PROFILES_ACTIVE=dev
+        networks:
+            - app-network
+        restart: always
+
+
+    # Second Spring Boot Uygulaması
+    second-backend:
+        build:
+            context: ../second
+            dockerfile: Dockerfile
+        container_name: second-backend
+        ports:
+            - "9090:9090"
+        environment:
+            - SPRING_PROFILES_ACTIVE=dev
+        networks:
+            - app-network
+        restart: always
+
+
+    # React Uygulaması
+    first-frontend:
+        build:
+            context: ../first-app-frontend
+            dockerfile: Dockerfile
+        container_name: first-frontend
+        ports:
+            - "3000:80"
+        depends_on:
+            - first-backend
+        networks:
+            - app-network
+        restart: always
+
+    # React Uygulaması
+    second-frontend:
+        build:
+            context: ../second-app-frontend
+            dockerfile: Dockerfile
+        container_name: second-frontend
+        ports:
+            - "4000:80"
+        depends_on:
+            - second-backend
+        networks:
+            - app-network
+        restart: always
+
+networks:
+    app-network:
+        driver: bridge

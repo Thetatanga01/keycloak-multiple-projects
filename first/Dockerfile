@@ -1,18 +1,29 @@
-# Dockerfile.prod
+FROM maven:3.9-eclipse-temurin-24 AS build
 
-# 1. Build aşaması
-FROM maven:3.8-jdk-17 AS build
 WORKDIR /app
+
+# Maven UTF-8 ve filtreleme sorunlarını çözmek için env ayarları
+ENV MAVEN_OPTS="-Dfile.encoding=UTF-8"
+
+# Pom.xml dosyasını kopyala ve bağımlılıkları indir
 COPY pom.xml .
+RUN mvn dependency:go-offline -DskipTests=true
+
+# Kaynak kodları kopyala ve derleme yap
 COPY src ./src
-RUN mvn clean package -DskipTests
+# Resource filtreleme sorununu aşmak için özel parametreler
+RUN mvn package -DskipTests=true -Dmaven.test.skip=true -Dproject.build.sourceEncoding=UTF-8 -Dproject.reporting.outputEncoding=UTF-8
 
-# 2. Runtime
-FROM eclipse-temurin:17-jre
+# Runtime aşaması
+FROM eclipse-temurin:24-jre-alpine
+
 WORKDIR /app
-COPY --from=build /app/target/*.jar ./app.jar
 
-# Prod profili aktif et ve application-prod.properties’i kullan
-ENV SPRING_PROFILES_ACTIVE=prod
+# Build aşamasından JAR dosyasını kopyala
+COPY --from=build /app/target/*.jar app.jar
 
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+# Uygulama portunu aç
+EXPOSE 8080
+
+# Uygulamayı çalıştır
+ENTRYPOINT ["java", "-Dspring.profiles.active=dev", "-jar", "app.jar"]
