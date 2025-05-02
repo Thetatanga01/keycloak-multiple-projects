@@ -6,7 +6,7 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 
 interface ApiService {
-    @GET("realms/guven_realm/protocol/openid-connect/userinfo")
+    @GET("https://secondbackend.guven.uk/api/user")
     suspend fun getUserInfo(@Header("Authorization") auth: String): Map<String, Any>
 
     @GET("/api/resources")
