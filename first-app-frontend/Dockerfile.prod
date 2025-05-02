@@ -1,0 +1,16 @@
+# 1) Build aşaması (dev build değil prod build mantığı burada work‑around)
+FROM node:18-alpine AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+# .env.production’i okumak için NODE_ENV’i development’a çevirsek de CRA build her zaman production modundadır:
+ENV NODE_ENV=production
+RUN npm run build
+
+# 2) Statik sunum: nginx
+FROM nginx:1.23-alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/build /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx","-g","daemon off;"]

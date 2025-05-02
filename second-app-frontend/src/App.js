@@ -6,6 +6,12 @@ function App() {
   const { keycloak, initialized } = useKeycloak();
   const [apiResponse, setApiResponse] = useState('');
 
+  // API URL'leri için ortam değişkenlerini kullan
+  const FIRST_BACKEND_URL = process.env.REACT_APP_FIRST_BACKEND_URL || 'http://localhost:8080';
+  const SECOND_BACKEND_URL = process.env.REACT_APP_SECOND_BACKEND_URL || 'http://localhost:9090';
+  const FIRST_FRONTEND_URL = process.env.REACT_APP_FIRST_FRONTEND_URL || 'http://localhost:3000';
+  const SECOND_FRONTEND_URL = process.env.REACT_APP_SECOND_FRONTEND_URL || 'http://localhost:4000';
+
   if (!initialized) {
     return <div>Loading…</div>;
   }
@@ -39,25 +45,25 @@ function App() {
       <div className="button-group">
         <button
           className="btn btn-primary"
-          onClick={() => callApi('http://localhost:9090/api/user')}
+          onClick={() => callApi(`${SECOND_BACKEND_URL}/api/user`)}
         >
           Second App Backend Api Call
         </button>
         <button
           className="btn btn-primary"
-          onClick={() => callApi('http://localhost:8080/api/user')}
+          onClick={() => callApi(`${FIRST_BACKEND_URL}/api/user`)}
         >
           First App Backend Api Call
         </button>
         <button
           className="btn btn-secondary"
-          onClick={() => window.location.href = 'http://localhost:8080/api/user?continue'}
+          onClick={() => window.location.href = `${SECOND_BACKEND_URL}/api/user?continue`}
         >
-          First App Backend EndPoint
+          Second App Backend EndPoint
         </button>
         <button
           className="btn btn-secondary"
-          onClick={() => window.location.href = 'http://localhost:3000'}
+          onClick={() => window.location.href = `${FIRST_FRONTEND_URL}`}
         >
           First App FrontEnd EndPoint
         </button>

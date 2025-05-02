@@ -1,0 +1,20 @@
+# Geliştirme (dev) sunucusu için tek katmanlı imaj
+FROM node:18-alpine
+
+WORKDIR /app
+
+# package dosyalarını kopyala ve bağımlılıkları yükle
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Kaynak kodları ve .env.development dosyasını kopyala
+COPY . .
+
+# Development modunu ayarla
+ENV NODE_ENV=development
+
+# React dev server varsayılan portu (80) aç
+EXPOSE 80
+
+# .env.development otomatik yüklenecek; hot‑reload ile başlat
+CMD ["npm", "start"]
