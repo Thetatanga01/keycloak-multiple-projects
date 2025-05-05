@@ -5,13 +5,11 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
-import androidx.browser.customtabs.CustomTabsIntent
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import net.openid.appauth.*
-import net.openid.appauth.browser.BrowserAllowList
-import net.openid.appauth.browser.VersionedBrowserMatcher
 import com.auth0.android.jwt.JWT
+import uk.guven.third.MainActivity
 import java.util.concurrent.atomic.AtomicReference
 
 class AuthService(private val context: Context) {
@@ -288,32 +286,49 @@ class AuthService(private val context: Context) {
         }
     }
 
-    /**
-     * Çıkış yapar ve token'ları temizler
-     * @param callback Çıkış işlemi tamamlandığında çağrılacak fonksiyon
-     */
-    fun logout(callback: (Boolean) -> Unit) {
-        val idToken = authPrefs.getString(KEY_ID_TOKEN, null)
 
-        val editor = authPrefs.edit()
-        editor.clear()
-        editor.commit()  // Changed from apply() for API compatibility
+    fun logout(token: String?, callback: (Boolean) -> Unit) {
+        // ——— 2) ServiceConfig’e logout endpoint’i ekle
+        val serviceConfig = AuthorizationServiceConfiguration(
+            Uri.parse(AUTH_ENDPOINT),    // authz endpoint
+            Uri.parse(TOKEN_ENDPOINT),   // token endpoint
+            null,                        // registration endpoint
+            Uri.parse(LOGOUT_ENDPOINT)   // end-session endpoint
+        )
 
-        this.authState.set(AuthState())  // Use 'this.authState' to refer to the class field
+        // ——— 3) EndSessionRequest oluştur
+        val endSessionRequest = EndSessionRequest.Builder(serviceConfig)
+            .setIdTokenHint(token)                                    // id_token_hint
+            .setPostLogoutRedirectUri(Uri.parse(REDIRECT_URI))          // post_logout_redirect_uri
+            .setAdditionalParameters(mapOf("client_id" to CLIENT_ID))    // ekstra parametre
+            .build()
 
-        // Keycloak'tan çıkış yap
-        if (idToken != null) {
-            val logoutUri = Uri.parse(LOGOUT_ENDPOINT)
-                .buildUpon()
-                .appendQueryParameter("id_token_hint", idToken)
-                .appendQueryParameter("client_id", CLIENT_ID)
-                .appendQueryParameter("post_logout_redirect_uri", REDIRECT_URI)
-                .build()
+        // ——— 4) PendingIntent ile logout callback’ini yakala
+        val intent = Intent(context, MainActivity::class.java)
+            .apply { action = "LOGOUT_CALLBACK" }
+        val pi = PendingIntent.getActivity(
+            context, 0, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+        )
 
-            val intent = CustomTabsIntent.Builder().build()
-            intent.launchUrl(context, logoutUri)
-        }
+        // ——— 5) AppAuth ile oturumu kapat
+        AuthorizationService(context)
+            .performEndSessionRequest(endSessionRequest, pi)
+
+        // ——— 6) Şimdi lokal state’i temizle ve cookie’leri kaldır
+        authPrefs.edit().clear().commit()
+        authState.set(AuthState())
+        android.webkit.CookieManager.getInstance().removeAllCookies(null)
+        android.webkit.CookieManager.getInstance().flush()
 
         callback(true)
     }
+
+
+
+
+
+
+
+
 }

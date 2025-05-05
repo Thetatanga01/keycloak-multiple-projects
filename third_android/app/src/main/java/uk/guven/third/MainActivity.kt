@@ -22,6 +22,7 @@ import net.openid.appauth.ResponseTypeValues
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import uk.guven.third.api.ApiClient
+import uk.guven.third.auth.AuthService
 
 class MainActivity : AppCompatActivity() {
 
@@ -35,6 +36,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private lateinit var authService: AuthorizationService
+    private lateinit var authManager: AuthService
     private var authState: AuthState = AuthState()
     private val apiClient = ApiClient()
     private val httpClient = OkHttpClient()
@@ -54,6 +56,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         authService = AuthorizationService(this)
+        authManager = AuthService(this)
         loginButton         = findViewById(R.id.login_button)
         logoutButton        = findViewById(R.id.logout_button)
         apiCallButton       = findViewById(R.id.api_call_button)
@@ -180,9 +183,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun performLogout() {
-        authState = AuthState()
-        autoLoginTried = false            // ← burayı ekleyin
-        updateUIBasedOnAuthState()
+        authManager.logout(authState.idToken) { success ->
+            runOnUiThread {
+                if (success) {
+                    Toast.makeText(this, "Oturum sonlandi", Toast.LENGTH_SHORT).show()
+                    authState = AuthState()
+                    autoLoginTried = false
+                    updateUIBasedOnAuthState()
+                } else {
+                    Toast.makeText(this, "Çıkış yapılamadı", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
     }
 
     private fun updateUIBasedOnAuthState() {
